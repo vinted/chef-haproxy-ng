@@ -1,12 +1,12 @@
 name             'haproxy-ng'
-maintainer       'Nathan Williams'
-maintainer_email 'nath.e.will@gmail.com'
+maintainer       'VINTED'
+maintainer_email 'sre@vinted.com'
 license          'apache2'
 description      'modern, resource-driven cookbook for managing haproxy'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-source_url       'https://github.com/nathwill/chef-haproxy-ng'
-issues_url       'https://github.com/nathwill/chef-haproxy-ng/issues'
-version          '1.2.1'
+source_url       'https://github.com/vinted/chef-haproxy-ng'
+issues_url       'https://github.com/vinted/chef-haproxy-ng/issues'
+version          '1.2.2'
 
 %w( fedora redhat centos scientific ubuntu ).each do |platform|
   supports platform
