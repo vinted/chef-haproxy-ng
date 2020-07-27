@@ -1,33 +1,3 @@
-# 1.2.1 / 2016-10-12
-
-* Add an attribute to allow restart or reload service control
-
-# 1.2.0 / 2015-12-03
-
-* fix issue with using attributes as proxy config arg by reading proxy-provider generated stub (thanks @wktmeow)
-
-# 1.1.1 / 2015-11-11
-
-* add config_tail option for adding config after acls (thanks @balexx!)
-
-# 1.1.0 / 2015-09-25
-
-* continuation of config merge fix to handle attributes (thanks @kwilczynski!)
-* updated init system handling (added systemd cookbook dependency)
-
-# 1.0.2 / 2015-08-25
-
-* fix config merge when passing an attribute instead of an array (thanks @kwilczynski and @andrewdutton!)
-
-# 1.0.1 / 2015-07-04
-
-* update to haproxy 1.5.14
-
-# 1.0.0 / 2015-06-26
-
-* remove world-readability from config templates
-* update to latest source release
-
 # 0.5.2 / 2015-06-24
 
 * add missing requires to libraries

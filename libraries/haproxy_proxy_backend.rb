@@ -53,13 +53,11 @@ module Haproxy
       end
       # rubocop: enable MethodLength
 
-      # rubocop: disable LineLength
-      def self.merged_config(config, backend)
-        config = Haproxy::Helpers.from_immutable_array(config)
+      def self.merged_config(c, backend)
         backend.servers.each do |s|
-          config << "server #{s['name']} #{s['address']}:#{s['port']} #{s['config']}"
+          c << "server #{s['name']} #{s['address']}:#{s['port']} #{s['config']}"
         end
-        config
+        c
       end
     end
   end

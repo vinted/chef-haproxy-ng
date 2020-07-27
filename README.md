@@ -1,8 +1,5 @@
 # haproxy-ng cookbook  [![Build Status](https://travis-ci.org/nathwill/chef-haproxy-ng.svg?branch=master)](https://travis-ci.org/nathwill/chef-haproxy-ng)
 
-This cookbook is deprecated, check out the [haproxy](https://github.com/sous-chefs/haproxy) cookbook instead.
-
-
 A resource-driven cookbook for configuring [HAProxy](http://www.haproxy.org/).
 
 Cookbook builds on 2 core resources:
@@ -18,7 +15,7 @@ proxy types.
 Suggested background reading:
 
 - [The Fine Manual](http://cbonte.github.io/haproxy-dconv/configuration-1.5.html)
-- This README, the modules in `libraries/haproxy*.rb`, and the individual resources/providers (`libraries/chef_haproxy*.rb`)
+- This README, the modules in `libraries/00_helpers.rb`, and the individual resources/providers
 - the test target and example wrapper cookbook: 'test/fixtures/cookbooks/my-lb'
 - the consul-template powered example wrapper cookbook:  'test/fixtures/cookbooks/my-consul-lb'
 
@@ -32,7 +29,8 @@ Configures a default instance, 'haproxy_instance[haproxy]', and corresponding
 
 This recipe also provides a useful example of using the provided helper, 
 `Haproxy::Helpers#proxy`, to map a list of proxies to their corresponding 
-resources in the resource collection. 
+resources in the resource collection. It also illustrates the recommended 
+pattern of proxying service reloads through a validating execute resource. 
 
 See wrapper cookbook example at 'test/fixtures/cookbooks/my-lb'.
 
@@ -99,34 +97,6 @@ but treating it like one is useful for code reusability. Don't judge me.
 |peers|array of hashes. each hash requires 'name', 'config' keys|[]|
 |config|array of peers keywords. validated against whitelist|[]|
 
-
-For example, this resource:
-
-```ruby
-haproxy_peers 'lb' do
-  peers [
-    {
-      'name' => 'lb01',
-      'address' => '12.4.56.78',
-      'port' => 1_024
-    },
-    {
-      'name' => 'lb02',
-      'address' => '12.34.56.8',
-      'port' => 1_024
-    },
-  ]
-end
-```
-
-will render this configuration:
-
-```text
-peers lb
-  peer lb01 12.4.56.78:1024
-  peer lb02 12.34.56.8:1024
-```
-
 ### haproxy_userlist
 
 Maps to a userlist block in haproxy configuration. Also not actually a proxy, 
@@ -138,34 +108,6 @@ as such.
 |groups|array of hashes. hashes require 'name', 'config' keys|[]|
 |users|array of hashes. hashes require 'name', 'config' keys|[]|
 |config|array of userlist keywords, validated against whitelist|[]|
-
-For example, this resource:
-
-```ruby
-haproxy_userlist 'L1' do
-  groups [
-    { 'name' => 'G1', 'config' => 'users tiger,scott' },
-    { 'name' => 'G2', 'config' => 'users xdb,scott' }
-  ]
-  users [
-    { 'name' => 'tiger', 'config' => 'insecure-password password123' },
-    { 'name' => 'scott', 'config' => 'insecure-password pa55word123' },
-    { 'name' => 'xdb', 'config' => 'insecure-password hello' }
-  ]
-end
-```
-
-will render this configuration:
-
-```text
-userlist L1
-  group G1 users tiger,scott
-  group G2 users xdb,scott
-  user tiger insecure-password password123
-  user scott insecure-password pa55word123
-  user xdb insecure-password hello
-
-```
 
 ### haproxy_defaults
 
@@ -180,37 +122,6 @@ suggests that resource names be capitalized (e.g. haproxy_defaults[HTTP]).
 |balance|desired balancing algo (see docs for permitted values)|nil|
 |source|argument to source keyword|nil|
 |config|array of defaults keywords, validated against whitelist|[]|
-
-For example, this resource:
-
-```ruby
-haproxy_defaults 'TCP' do
-  mode 'tcp'
-  balance 'leastconn'
-  source node['ipaddress']
-  config [
-    'option clitcpka',
-    'option srvtcpka',
-    'timeout connect 5s',
-    'timeout client 300s',
-    'timeout server 300s'
-  ]
-end
-```
-
-will render this configuration:
-
-```text
-defaults TCP
-  balance leastconn
-  mode tcp
-  option clitcpka
-  option srvtcpka
-  timeout connect 5s
-  timeout client 300s
-  timeout server 300s
-  source 10.0.2.15
-```
 
 ### haproxy_frontend
 
@@ -227,50 +138,6 @@ and typically to one or more listening ports or sockets.
 |default_backend|argument to `default_backend` keyword|nil|
 |use_backends|array of hashes, each requiring 'backend', 'condition', keys|[]|
 |config|array of frontend keywords, validated against whitelist|[]|
-|config_tail|same as 'config' only appended after acls|[]|
-
-For example, this resource:
-
-```ruby
-haproxy_frontend 'www' do
-  mode 'http'
-  acls [
-    {
-      'name' => 'inside',
-      'criterion' => 'src 10.0.0.0/8'
-    }
-  ]
-  description 'http frontend'
-  bind '*:80'
-  default_backend 'app'
-  use_backends [
-    {
-      'backend' => 'app',
-      'condition' => 'if inside'
-    }
-  ]
-  config [
-    'option clitcpka'
-  ]
-  config_tail [
-    'http-request allow if inside'
-  ]
-end
-```
-
-will render this configuration:
-
-```text
-frontend www
-  bind *:80
-  mode http
-  option clitcpka
-  description http frontend
-  acl inside src 10.0.0.0/8
-  http-request allow if inside
-  default_backend app
-  use_backend app if inside
-```
 
 ### haproxy_backend
 
@@ -286,59 +153,6 @@ Maps to a backend configuration block in haproxy configuration.
 |source|string specifying args to source keyword|nil|
 |servers|array of hashes, each requiring 'name', 'address', 'port' keys. 'config' key optional|[]|
 |config|array of backend keywords, validated against whitelist|[]|
-|config_tail|same as 'config' only appended after acls|[]|
-
-For example, this resource:
-
-```ruby
-haproxy_backend 'app' do
-  mode 'http'
-  acls [
-    {
-      'name' => 'inside',
-      'criterion' => 'src 10.0.0.0/8'
-    }
-  ]
-  description 'app pool'
-  balance 'roundrobin'
-  source node['ipaddress']
-  servers [
-    {
-      'name' => 'app01',
-      'address' => '12.34.56.78',
-      'port' => 80,
-      'config' => 'check inter 5000 rise 2 fall 5'
-    },
-    {
-      'name' => 'app02',
-      'address' => '12.4.56.78',
-      'port' => 80,
-      'config' => 'check inter 5000 rise 2 fall 5'
-    },
-  ]
-  config [
-    'option httpchk GET /health_check HTTP/1.1\r\nHost:\ localhost'
-  ]
-  config_tail [
-    'http-request allow if inside'
-  ]
-end
-```
-
-will render this configuration:
-
-```text
-backend app
-  balance roundrobin
-  mode http
-  option httpchk GET /health_check HTTP/1.1\r\nHost:\ localhost
-  description app pool
-  acl inside src 10.0.0.0/8
-  http-request allow if inside
-  source 10.0.2.15
-  server app01 12.34.56.78:80 check inter 5000 rise 2 fall 5
-  server app02 22.4.56.78:80 check inter 5000 rise 2 fall 5
-```
 
 ### haproxy_listen
 
@@ -359,58 +173,4 @@ for tcp-mode proxies with a 1:1 frontend:backend mapping.
 |default_backend|argument to `default_backend` keyword|nil|
 |use_backends|array of hashes, each requiring 'backend', 'condition', keys|[]|
 |config|array of listen keywords, validated against whitelist|[]|
-|config_tail|same as 'config' only appended after acls|[]|
 
-For example, this resource:
-
-```ruby
-haproxy_listen 'mysql' do
-  mode 'tcp'
-  acls [
-    {
-      'name' => 'inside',
-      'criterion' => 'src 10.0.0.0/8'
-    }
-  ]
-  description 'mysql pool'
-  balance 'leastconn'
-  source node['ipaddress']
-  bind '0.0.0.0:3306'
-  servers [
-    {
-      'name' => 'mysql01',
-      'address' => '12.34.56.89',
-      'port' => 3_306,
-      'config' => 'maxconn 500 check port 3306 inter 2s backup'
-    },
-    {
-      'name' => 'mysql02',
-      'address' => '12.34.56.90',
-      'port' => 3_306,
-      'config' => 'maxconn 500 check port 3306 inter 2s backup'
-    },
-  ]
-  config [
-    'option mysql-check'
-  ]
-  config_tail [
-    'http-request allow if inside'
-  ]
-end
-```
-
-will generate this configuration:
-
-```text
-listen mysql
-  bind 0.0.0.0:3306
-  balance leastconn
-  mode tcp
-  option mysql-check
-  description mysql pool
-  acl inside src 10.0.0.0/8
-  http-request allow if inside
-  source 10.0.2.15
-  server mysql01 12.34.56.89:3306 maxconn 500 check port 3306 inter 2s backup
-  server mysql02 12.34.56.90:3306 maxconn 500 check port 3306 inter 2s backup
-```

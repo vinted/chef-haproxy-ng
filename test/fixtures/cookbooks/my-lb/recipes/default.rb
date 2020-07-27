@@ -130,7 +130,9 @@ haproxy_frontend 'www' do
       'condition' => 'if inside'
     }
   ]
-  config node['my-lb']['fe_config']
+  config [
+    'option clitcpka'
+  ]
 end
 
 haproxy_defaults 'HTTP' do
