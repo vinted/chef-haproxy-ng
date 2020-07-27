@@ -32,10 +32,9 @@ module Haproxy
         )
       end
 
-      def self.merged_config(config, proxy)
-        config = Haproxy::Helpers.from_immutable_array(config)
-        config.unshift("mode #{proxy.mode}") if proxy.mode
-        config
+      def self.merged_config(conf, proxy)
+        conf.unshift("mode #{proxy.mode}") if proxy.mode
+        conf
       end
     end
   end

@@ -8,8 +8,8 @@ provisioner:
 platforms:
   - name: ubuntu-12.04
   - name: ubuntu-14.04
-  - name: centos-6.7
-  - name: centos-7.1
+  - name: centos-6.6
+  - name: centos-7.0
   - name: fedora-21
 
 suites:
@@ -32,8 +32,8 @@ suites:
       haproxy:
         install_method: ppa
     excludes:
-      - centos-6.7
-      - centos-7.1
+      - centos-6.6
+      - centos-7.0
       - fedora-21
   - name: consul
     run_list:
@@ -41,5 +41,5 @@ suites:
     excludes:
       - ubuntu-12.04
       - ubuntu-14.04
-      - centos-6.7
+      - centos-6.6
       - fedora-21

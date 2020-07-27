@@ -47,11 +47,10 @@ module Haproxy
         )
       end
 
-      def self.merged_config(config, backend)
-        config = Haproxy::Helpers.from_immutable_array(config)
-        config.unshift("balance #{backend.balance}") if backend.balance
-        config << "source #{backend.source}" if backend.source
-        config
+      def self.merged_config(conf, db)
+        conf.unshift("balance #{db.balance}") if db.balance
+        conf << "source #{db.source}" if db.source
+        conf
       end
     end
   end

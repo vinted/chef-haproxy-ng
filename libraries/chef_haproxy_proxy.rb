@@ -20,7 +20,6 @@
 # limitations under the License.
 #
 
-require 'chef/resource'
 require_relative 'haproxy'
 
 class Chef::Resource
@@ -80,6 +79,7 @@ class Chef::Provider
       )
     end
 
+    # rubocop: disable AbcSize
     def load_current_resource
       @current_resource ||= Chef::Resource::HaproxyProxy.new(new_resource.name)
       @current_resource.verify new_resource.verify
@@ -87,6 +87,7 @@ class Chef::Provider
       @current_resource.config new_resource.config
       @current_resource
     end
+    # rubocop: enable AbcSize
 
     def action_create
       new_resource.updated_by_last_action(edit_proxy(:create))
@@ -99,7 +100,6 @@ class Chef::Provider
     private
 
     def edit_proxy(exec_action)
-      @proxy_file.mode '0640'
       @proxy_file.path ::File.join(
         Chef::Config['file_cache_path'] || '/tmp',
         "haproxy.#{@current_resource.type}.#{@current_resource.name}.cfg"
