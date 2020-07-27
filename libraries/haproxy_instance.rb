@@ -35,6 +35,7 @@ module Haproxy
       'log-send-hostname',
       'log-tag',
       'nbproc',
+      'nbthread',
       'pidfile',
       'user',
       'ssl-default-bind-ciphers',
